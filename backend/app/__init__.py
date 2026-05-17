@@ -1,0 +1,1 @@
+"""Syntrix backend application package."""

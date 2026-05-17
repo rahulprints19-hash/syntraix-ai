@@ -1,0 +1,21 @@
+.git
+.gitignore
+.env
+.env.*
+!.env.example
+frontend/.env*
+!frontend/.env.example
+backend/.env*
+!backend/.env.example
+frontend/node_modules
+frontend/.next
+frontend/.next-localappdata
+frontend/tsconfig.tsbuildinfo
+backend/.venv
+backend/__pycache__
+backend/.pytest_cache
+backend/.ruff_cache
+Docker Desktop Installer.exe
+**/*.pyc
+**/*.pyo
+**/*.pyd

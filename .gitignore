@@ -1,0 +1,33 @@
+# Environment files
+.env
+frontend/.env.local
+backend/.env
+git-metadata/
+
+# Node / Next.js
+frontend/node_modules
+frontend/.next
+frontend/.next-localappdata
+frontend/out
+frontend/tsconfig.tsbuildinfo
+
+# Python
+backend/.venv
+**/__pycache__/
+**/*.pyc
+backend/.pytest_cache
+backend/.ruff_cache
+backend/.mypy_cache
+backend/*.egg-info
+backend/syntrix.db
+backend/workspaces/*
+!backend/workspaces/.gitkeep
+
+# General
+.DS_Store
+Thumbs.db
+.idea
+.vscode
+*.exe
+*.log
+coverage
