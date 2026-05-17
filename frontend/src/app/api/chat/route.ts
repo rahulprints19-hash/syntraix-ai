@@ -3,10 +3,11 @@ import OpenAI from "openai";
 import { z } from "zod";
 
 import { buildSystemPrompt } from "@/lib/ai";
+import { requireUser } from "@/lib/auth";
 import { env, requireEnv } from "@/lib/env";
+import { addMessage, addUsageTokens, createChat } from "@/lib/memory-store";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { sanitizeText } from "@/lib/security";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
 
@@ -18,14 +19,7 @@ const chatSchema = z.object({
 });
 
 export async function POST(request: NextRequest) {
-  const supabase = await createSupabaseServerClient();
-  const {
-    data: { user }
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return Response.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const user = await requireUser();
 
   if (!checkRateLimit(user.id, 20, 60_000)) {
     return Response.json({ error: "Rate limit exceeded. Try again soon." }, { status: 429 });
@@ -37,21 +31,10 @@ export async function POST(request: NextRequest) {
   let chatId = payload.chatId;
 
   if (!chatId) {
-    const { data, error } = await supabase
-      .from("chat_history")
-      .insert({ title, user_id: user.id })
-      .select("id")
-      .single();
-    if (error) return Response.json({ error: error.message }, { status: 500 });
-    chatId = data.id;
+    chatId = createChat(user.id, title).id;
   }
 
-  await supabase.from("messages").insert({
-    chat_id: chatId,
-    content: userMessage,
-    role: "user",
-    user_id: user.id
-  });
+  addMessage(user.id, chatId, "user", userMessage);
 
   const memories = payload.messages
     .slice(-8)
@@ -88,19 +71,8 @@ export async function POST(request: NextRequest) {
           controller.enqueue(encoder.encode(delta));
         }
 
-        await supabase.from("messages").insert({
-          chat_id: chatId,
-          content: assistantText,
-          role: "assistant",
-          user_id: user.id
-        });
-        await supabase.from("ai_usage").insert({
-          chat_id: chatId,
-          model: payload.model,
-          tokens: Math.ceil((assistantText.length + userMessage.length) / 4),
-          user_id: user.id
-        });
-        await supabase.from("chat_history").update({ updated_at: new Date().toISOString() }).eq("id", chatId);
+        addMessage(user.id, chatId, "assistant", assistantText);
+        addUsageTokens(Math.ceil((assistantText.length + userMessage.length) / 4));
       } catch (error) {
         controller.enqueue(encoder.encode(error instanceof Error ? `\n\n${error.message}` : "\n\nAI request failed."));
       } finally {

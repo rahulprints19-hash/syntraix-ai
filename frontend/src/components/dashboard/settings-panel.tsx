@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 type ApiKeyRow = {
   created_at: string;
@@ -34,9 +33,13 @@ export function SettingsPanel({ email, plan }: { email: string; plan: string }) 
 
   async function updatePassword() {
     setLoading(true);
-    const supabase = createSupabaseBrowserClient();
-    const { error } = await supabase.auth.updateUser({ password });
-    setNotice(error ? error.message : "Password updated.");
+    const response = await fetch("/api/auth/password", {
+      body: JSON.stringify({ password }),
+      headers: { "content-type": "application/json" },
+      method: "POST"
+    });
+    const payload = await response.json().catch(() => ({}));
+    setNotice(response.ok ? "Password updated for this demo session." : payload.error ?? "Password update failed.");
     setLoading(false);
     setPassword("");
   }

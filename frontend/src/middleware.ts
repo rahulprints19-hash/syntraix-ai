@@ -1,50 +1,23 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { createServerClient } from "@supabase/ssr";
 
-import { getSupabasePublicConfig } from "@/lib/supabase/config";
+import { hasAuthCookie } from "@/lib/auth-cookie";
 
 const protectedPrefixes = ["/dashboard"];
 const authPages = ["/login", "/register", "/forgot-password"];
 
-export async function middleware(request: NextRequest) {
-  let response = NextResponse.next({ request });
-  const supabaseConfig = getSupabasePublicConfig();
-
-  if (!supabaseConfig) {
-    return response;
-  }
-
-  const supabase = createServerClient(supabaseConfig.url, supabaseConfig.anonKey, {
-    cookies: {
-      getAll() {
-        return request.cookies.getAll();
-      },
-      setAll(cookiesToSet) {
-        cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
-        response = NextResponse.next({ request });
-        cookiesToSet.forEach(({ name, options, value }) => response.cookies.set(name, value, options));
-      }
-    }
-  });
-
-  let user = null;
-  try {
-    const { data } = await supabase.auth.getUser();
-    user = data.user;
-  } catch {
-    user = null;
-  }
+export function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
+  const hasUser = hasAuthCookie(request);
 
-  if (!user && protectedPrefixes.some((prefix) => pathname.startsWith(prefix))) {
+  if (!hasUser && protectedPrefixes.some((prefix) => pathname.startsWith(prefix))) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  if (user && authPages.includes(pathname)) {
+  if (hasUser && authPages.includes(pathname)) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
-  return response;
+  return NextResponse.next();
 }
 
 export const config = {

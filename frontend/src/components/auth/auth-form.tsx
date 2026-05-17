@@ -3,26 +3,13 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Globe2, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 type AuthMode = "login" | "register" | "forgot";
-
-function getAuthRedirectUrl(nextPath: string) {
-  return `${window.location.origin}/auth/callback?next=${encodeURIComponent(nextPath)}`;
-}
-
-function getAuthErrorMessage(error: unknown) {
-  if (error instanceof TypeError && error.message === "Failed to fetch") {
-    return "Could not reach Supabase. Check NEXT_PUBLIC_SUPABASE_URL and your internet connection.";
-  }
-
-  return error instanceof Error ? error.message : "Authentication failed.";
-}
 
 export function AuthForm({ initialError, mode }: { initialError?: string; mode: AuthMode }) {
   const router = useRouter();
@@ -38,8 +25,8 @@ export function AuthForm({ initialError, mode }: { initialError?: string; mode: 
     mode === "login"
       ? "Sign in to continue your Syntrix AI workspace."
       : mode === "register"
-        ? "Start with a free workspace and upgrade when you grow."
-        : "We will send a secure reset link to your email.";
+        ? "Start with a free workspace. No Supabase setup required."
+        : "Enter your email and we will reset the demo password locally.";
 
   async function submit() {
     setLoading(true);
@@ -47,53 +34,29 @@ export function AuthForm({ initialError, mode }: { initialError?: string; mode: 
     setMessage(null);
 
     try {
-      const supabase = createSupabaseBrowserClient();
+      const endpoint = mode === "login" ? "/api/auth/login" : mode === "register" ? "/api/auth/register" : "/api/auth/reset";
+      const response = await fetch(endpoint, {
+        body: JSON.stringify({ email, fullName, password }),
+        headers: { "content-type": "application/json" },
+        method: "POST"
+      });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.error ?? "Authentication failed.");
+
       if (mode === "login") {
-        const { error: loginError } = await supabase.auth.signInWithPassword({ email, password });
-        if (loginError) throw loginError;
         router.replace("/dashboard");
       }
 
       if (mode === "register") {
-        const { error: registerError } = await supabase.auth.signUp({
-          email,
-          options: {
-            data: { full_name: fullName },
-            emailRedirectTo: getAuthRedirectUrl("/verify-email")
-          },
-          password
-        });
-        if (registerError) throw registerError;
-        setMessage("Check your inbox to verify your email.");
+        router.replace("/dashboard");
       }
 
       if (mode === "forgot") {
-        const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
-          redirectTo: getAuthRedirectUrl("/dashboard/settings")
-        });
-        if (resetError) throw resetError;
-        setMessage("Password reset link sent.");
+        setMessage(payload.message ?? "Password reset for demo auth.");
       }
     } catch (nextError) {
-      setError(getAuthErrorMessage(nextError));
+      setError(nextError instanceof Error ? nextError.message : "Authentication failed.");
     } finally {
-      setLoading(false);
-    }
-  }
-
-  async function signInWithGoogle() {
-    setLoading(true);
-    setError(null);
-
-    try {
-      const supabase = createSupabaseBrowserClient();
-      const { error: googleError } = await supabase.auth.signInWithOAuth({
-        options: { redirectTo: getAuthRedirectUrl("/dashboard") },
-        provider: "google"
-      });
-      if (googleError) throw googleError;
-    } catch (nextError) {
-      setError(getAuthErrorMessage(nextError));
       setLoading(false);
     }
   }
@@ -130,12 +93,6 @@ export function AuthForm({ initialError, mode }: { initialError?: string; mode: 
           {loading ? <Loader2 className="mr-2 size-4 animate-spin" /> : null}
           {mode === "login" ? "Sign in" : mode === "register" ? "Create account" : "Send reset link"}
         </Button>
-        {mode !== "forgot" ? (
-          <Button className="w-full gap-2" disabled={loading} onClick={signInWithGoogle} variant="secondary">
-            <Globe2 className="size-4" />
-            Continue with Google
-          </Button>
-        ) : null}
       </div>
 
       <div className="mt-5 flex items-center justify-between text-sm text-slate-400">

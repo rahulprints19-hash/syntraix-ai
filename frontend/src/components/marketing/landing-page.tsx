@@ -12,13 +12,13 @@ const features: Array<{ detail: string; Icon: LucideIcon; title: string }> = [
   { detail: "Fast responses, model switching, markdown, code copy, and memory.", Icon: Zap, title: "Streaming AI chat" },
   { detail: "Search-ready conversation patterns with sources and summaries.", Icon: Search, title: "Perplexity-style research" },
   { detail: "Long-form reasoning, files, saved threads, and project context.", Icon: BrainCircuit, title: "Claude-like workspace" },
-  { detail: "Supabase auth, Razorpay subscriptions, admin analytics, and usage tracking.", Icon: Lock, title: "SaaS controls" }
+  { detail: "Demo auth, Razorpay subscriptions, admin analytics, and usage tracking.", Icon: Lock, title: "SaaS controls" }
 ];
 
 const faqs = [
   ["Can I use Syntrix AI for coding?", "Yes. It supports markdown, code blocks, copy buttons, saved chats, and file context."],
   ["Does it support Razorpay subscriptions?", "Yes. Checkout, subscription storage, webhooks, cancellation, and invoice history are wired."],
-  ["Can I deploy it on Vercel?", "Yes. The app uses Next.js API routes, Supabase PostgreSQL, and Vercel-ready config."]
+  ["Can I deploy it on Render?", "Yes. The app uses Next.js API routes and a Render-ready Docker config."]
 ];
 
 export function LandingPage() {

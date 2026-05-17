@@ -13,12 +13,6 @@ services:
         value: "1"
       - key: NEXT_PUBLIC_APP_URL
         value: https://syntrix-ai.onrender.com
-      - key: NEXT_PUBLIC_SUPABASE_URL
-        sync: false
-      - key: NEXT_PUBLIC_SUPABASE_ANON_KEY
-        sync: false
-      - key: SUPABASE_SERVICE_ROLE_KEY
-        sync: false
       - key: OPENAI_API_KEY
         sync: false
       - key: OPENAI_DEFAULT_MODEL

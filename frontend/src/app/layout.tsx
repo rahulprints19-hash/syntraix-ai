@@ -8,7 +8,7 @@ export const metadata: Metadata = {
     default: "Syntrix AI - The Future of AI Conversations",
     template: "%s | Syntrix AI"
   },
-  description: "A premium AI SaaS platform with streaming chat, Supabase auth, Razorpay billing, and admin analytics.",
+  description: "A premium AI SaaS platform with streaming chat, demo auth, Razorpay billing, and admin analytics.",
   openGraph: {
     description: "ChatGPT, Claude, and Perplexity-inspired AI workspace for production SaaS teams.",
     siteName: "Syntrix AI",
